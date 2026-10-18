@@ -1,0 +1,9 @@
+{
+  "id": "ki-system",
+  "name": "Ki System",
+  "description": "A martial energy system built around focus, training, and transformation.",
+  "energyType": "ki",
+  "compatibility": ["chakra", "spirit"],
+  "tags": ["combat", "training", "transformation"],
+  "version": "1.0.0"
+}

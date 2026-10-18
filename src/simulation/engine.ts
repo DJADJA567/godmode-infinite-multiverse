@@ -1,0 +1,59 @@
+import type { Person, WorldState } from './types';
+
+export class SimulationEngine {
+  private world: WorldState;
+
+  constructor(initialWorld: WorldState) {
+    this.world = structuredClone(initialWorld);
+  }
+
+  step() {
+    this.world.tick += 1;
+
+    for (const person of this.world.people) {
+      this.updatePerson(person);
+    }
+  }
+
+  getWorld() {
+    return this.world;
+  }
+
+  private updatePerson(person: Person) {
+    person.hunger = Math.min(100, person.hunger + 3);
+    person.energy = Math.max(0, person.energy - 1);
+
+    if (person.hunger > 65) {
+      person.goal = 'Find food';
+      const foodTile = this.world.tiles.find((tile) => tile.resource === 'food' && this.distance(person.x, person.y, tile.x, tile.y) < 8);
+
+      if (foodTile) {
+        person.x = foodTile.x;
+        person.y = foodTile.y;
+        person.hunger = Math.max(10, person.hunger - 35);
+        person.energy = Math.min(100, person.energy + 5);
+      }
+    } else if (person.energy < 25) {
+      person.goal = 'Recover by resting';
+      person.energy = Math.min(100, person.energy + 15);
+    } else if (person.job === 'builder' && this.world.buildings.length < 8) {
+      person.goal = 'Construct a shelter';
+      const x = (person.x + 1) % this.world.width;
+      const y = (person.y + 2) % this.world.height;
+      this.world.buildings.push({ id: `hut-${Date.now()}-${Math.random()}`, x, y, type: 'hut' });
+    } else {
+      person.goal = 'Explore the frontier';
+      person.x = (person.x + 1) % this.world.width;
+      person.y = (person.y + (person.id.length % 2 === 0 ? 1 : -1) + this.world.height) % this.world.height;
+      person.energy = Math.max(0, person.energy - 2);
+    }
+
+    if (person.health <= 0) {
+      person.goal = 'Fallen';
+    }
+  }
+
+  private distance(x1: number, y1: number, x2: number, y2: number) {
+    return Math.abs(x1 - x2) + Math.abs(y1 - y2);
+  }
+}

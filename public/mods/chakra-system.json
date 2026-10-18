@@ -1,0 +1,9 @@
+{
+  "id": "chakra-system",
+  "name": "Chakra System",
+  "description": "A spiritual flow system connected to life force and technique.",
+  "energyType": "chakra",
+  "compatibility": ["ki", "spirit"],
+  "tags": ["ninjutsu", "ritual", "body-control"],
+  "version": "1.0.0"
+}
