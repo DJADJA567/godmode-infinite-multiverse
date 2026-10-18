@@ -1,12 +1,19 @@
-import type { WorldState, Person } from './types';
+import type { WorldState, ModDefinition } from './types';
 import { updateCivilizations } from './civilization';
 import { simulateSkirmish } from './combat';
+import { applyModsToWorld } from './mods';
 
 export class SimulationEngine {
   private world: WorldState;
+  private activeModIds: string[] = [];
 
   constructor(initialWorld: WorldState) {
     this.world = structuredClone(initialWorld);
+  }
+
+  applyModDefinitions(activeModIds: string[], availableMods: ModDefinition[]) {
+    this.activeModIds = activeModIds;
+    applyModsToWorld(this.world as any, activeModIds, availableMods as any);
   }
 
   step() {
@@ -18,7 +25,7 @@ export class SimulationEngine {
     // Combat resolution for wars
     simulateSkirmish(this.world as WorldState);
 
-    for (const person of this.world.people as Person[]) {
+    for (const person of this.world.people as any[]) {
       this.updatePerson(person);
     }
   }
@@ -27,7 +34,7 @@ export class SimulationEngine {
     return this.world;
   }
 
-  private updatePerson(person: Person) {
+  private updatePerson(person: any) {
     person.hunger = Math.min(100, person.hunger + 3);
     person.energy = Math.max(0, person.energy - 1);
 
