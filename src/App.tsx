@@ -1,11 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import PhaserGame from './game/PhaserGame';
 import { SimulationEngine } from './simulation/engine';
-import { generateWorld, getWorldSnapshot } from './simulation/world';
+import { generateWorld } from './simulation/world';
 import type { WorldState } from './simulation/types';
 import { loadAvailableMods, validateMods, resolveDependencies, detectConflicts } from './simulation/mods';
 import { getActiveModIds, setActiveModIds } from './persistence/modsStore';
 import ModEditor from './components/ModEditor';
+import { getPerformanceProfile } from './simulation/performance';
 
 const initialWorld = generateWorld(42, 22, 16);
 
@@ -14,6 +15,10 @@ export default function App() {
   const [world, setWorld] = useState<WorldState>(initialWorld);
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(null);
   const [modCatalog, setModCatalog] = useState<any[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
+  const [speedMultiplier, setSpeedMultiplier] = useState(1);
+
+  const perf = getPerformanceProfile(speedMultiplier);
 
   useEffect(() => {
     if (!engineRef.current) {
@@ -21,12 +26,14 @@ export default function App() {
     }
 
     const interval = window.setInterval(() => {
-      engineRef.current?.step();
-      setWorld(engineRef.current!.getWorld());
-    }, 1000);
+      if (!isPaused) {
+        engineRef.current?.step();
+        setWorld(engineRef.current!.getWorld());
+      }
+    }, perf.tickIntervalMs);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [isPaused, perf.tickIntervalMs]);
 
   async function reloadMods() {
     const mods = await loadAvailableMods();
@@ -72,8 +79,25 @@ export default function App() {
         <div className="badges">
           <span>Prototype</span>
           <span>{world.tick} ticks</span>
+          <span>Perf: {perf.activeRadius} radius</span>
         </div>
       </header>
+
+      <div className="control-row">
+        <button type="button" className="primary-button" onClick={() => setIsPaused((p) => !p)}>
+          {isPaused ? 'Resume' : 'Pause'}
+        </button>
+
+        <label className="speed-picker">
+          <span>Speed</span>
+          <select value={speedMultiplier} onChange={(e) => setSpeedMultiplier(Number(e.target.value))}>
+            <option value={1}>1x</option>
+            <option value={2}>2x</option>
+            <option value={4}>4x</option>
+            <option value={8}>8x</option>
+          </select>
+        </label>
+      </div>
 
       <main className="layout">
         <aside className="panel sidebar">
