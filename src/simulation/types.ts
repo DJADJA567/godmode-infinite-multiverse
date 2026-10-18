@@ -21,14 +21,26 @@ export interface Person {
   job: Job;
   goal: string;
   personality: string;
-  homeId: string | null;
+  homeId: string | null; // village/civilization id
 }
 
 export interface Building {
   id: string;
   x: number;
   y: number;
-  type: 'camp' | 'hut' | 'tower';
+  type: 'camp' | 'hut' | 'tower' | 'capital';
+}
+
+export interface Civilization {
+  id: string;
+  name: string;
+  capitalX: number;
+  capitalY: number;
+  populationIds: string[];
+  territory: { x: number; y: number }[];
+  resources: { food: number; wood: number; stone: number };
+  technologyLevel: number;
+  relations: Record<string, 'neutral' | 'ally' | 'war'>;
 }
 
 export interface EnergySystem {
@@ -48,4 +60,5 @@ export interface WorldState {
   people: Person[];
   buildings: Building[];
   systems: EnergySystem[];
+  civilizations: Civilization[];
 }

@@ -1,4 +1,5 @@
 import type { Person, WorldState } from './types';
+import { updateCivilizations } from './civilization';
 
 export class SimulationEngine {
   private world: WorldState;
@@ -10,7 +11,10 @@ export class SimulationEngine {
   step() {
     this.world.tick += 1;
 
-    for (const person of this.world.people) {
+    // Update civilizations before individuals (they may produce resources, spawn people, trigger wars)
+    updateCivilizations(this.world as WorldState);
+
+    for (const person of this.world.people as Person[]) {
       this.updatePerson(person);
     }
   }
@@ -36,7 +40,7 @@ export class SimulationEngine {
     } else if (person.energy < 25) {
       person.goal = 'Recover by resting';
       person.energy = Math.min(100, person.energy + 15);
-    } else if (person.job === 'builder' && this.world.buildings.length < 8) {
+    } else if (person.job === 'builder' && this.world.buildings.length < 12) {
       person.goal = 'Construct a shelter';
       const x = (person.x + 1) % this.world.width;
       const y = (person.y + 2) % this.world.height;

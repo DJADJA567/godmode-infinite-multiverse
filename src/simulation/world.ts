@@ -28,6 +28,11 @@ function resourceFromTile(tile: TileType): ResourceType | null {
   return null;
 }
 
+function pickName(seedRand: () => number, idx: number) {
+  const baseNames = ['Ari', 'Mira', 'Toma', 'Zeki', 'Lina', 'Ren', 'Kova', 'Edda', 'Juno', 'Noor'];
+  return `${baseNames[idx % baseNames.length]}-${Math.floor(seedRand() * 1000)}`;
+}
+
 export function generateWorld(seed: number, width: number, height: number): WorldState {
   const rand = seededRandom(seed);
   const tiles: WorldTile[] = [];
@@ -49,7 +54,6 @@ export function generateWorld(seed: number, width: number, height: number): Worl
   }
 
   const people: Person[] = [];
-  const baseNames = ['Ari', 'Mira', 'Toma', 'Zeki', 'Lina', 'Ren', 'Kova', 'Edda', 'Juno', 'Noor'];
 
   for (let i = 0; i < 10; i += 1) {
     const x = Math.floor(rand() * width);
@@ -59,7 +63,7 @@ export function generateWorld(seed: number, width: number, height: number): Worl
 
     people.push({
       id: `person-${i + 1}`,
-      name: `${baseNames[i % baseNames.length]}-${i + 1}`,
+      name: pickName(rand, i),
       x,
       y,
       health: 100,
@@ -76,6 +80,56 @@ export function generateWorld(seed: number, width: number, height: number): Worl
     { id: 'camp-1', x: 2, y: 2, type: 'camp' },
     { id: 'hut-1', x: 4, y: 4, type: 'hut' },
   ];
+
+  // Create a couple of starter civilizations
+  const civilizations = [];
+  const civCount = 2;
+  for (let i = 0; i < civCount; i += 1) {
+    const cx = Math.floor(rand() * width);
+    const cy = Math.floor(rand() * height);
+    const civId = `civ-${i + 1}`;
+    const territory = [{ x: cx, y: cy }];
+
+    civilizations.push({
+      id: civId,
+      name: `Civ ${i + 1}`,
+      capitalX: cx,
+      capitalY: cy,
+      populationIds: [],
+      territory,
+      resources: { food: 5 + Math.floor(rand() * 20), wood: 5 + Math.floor(rand() * 20), stone: 2 + Math.floor(rand() * 10) },
+      technologyLevel: 1,
+      relations: {},
+    });
+  }
+
+  // Initialize relations neutral
+  for (const a of civilizations) {
+    for (const b of civilizations) {
+      if (a.id === b.id) continue;
+      a.relations[b.id] = 'neutral';
+    }
+  }
+
+  // Assign people to nearest civ
+  for (const person of people) {
+    let nearest = civilizations[0];
+    let bestDist = Math.abs(person.x - nearest.capitalX) + Math.abs(person.y - nearest.capitalY);
+    for (const civ of civilizations) {
+      const d = Math.abs(person.x - civ.capitalX) + Math.abs(person.y - civ.capitalY);
+      if (d < bestDist) {
+        nearest = civ;
+        bestDist = d;
+      }
+    }
+    person.homeId = nearest.id;
+    nearest.populationIds.push(person.id);
+  }
+
+  // Add capitals as buildings
+  for (const civ of civilizations) {
+    buildings.push({ id: `${civ.id}-capital`, x: civ.capitalX, y: civ.capitalY, type: 'capital' });
+  }
 
   return {
     width,
@@ -101,6 +155,7 @@ export function generateWorld(seed: number, width: number, height: number): Worl
         compatibility: ['ki', 'spirit'],
       },
     ],
+    civilizations,
   };
 }
 
@@ -110,5 +165,6 @@ export function getWorldSnapshot(world: WorldState) {
     tick: world.tick,
     resources: world.tiles.filter((tile) => tile.resource).length,
     systems: world.systems.length,
+    civilizations: world.civilizations.length,
   };
 }
