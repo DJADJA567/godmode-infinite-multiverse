@@ -3,65 +3,50 @@
 @@
          <aside className="panel inspector">
            <h2>Person inspector</h2>
-           {selectedPerson ? (
-             <div className="person-card">
-               <h3>{selectedPerson.name}</h3>
-               <ul>
-                 <li><span>Goal</span><strong>{selectedPerson.goal}</strong></li>
-                 <li><span>Job</span><strong>{selectedPerson.job}</strong></li>
-                 <li><span>Hunger</span><strong>{selectedPerson.hunger}</strong></li>
-                 <li><span>Energy</span><strong>{selectedPerson.energy}</strong></li>
-                 <li><span>Health</span><strong>{selectedPerson.health}</strong></li>
-                 <li><span>Location</span><strong>{selectedPerson.x}, {selectedPerson.y}</strong></li>
-                 <li><span>Personality</span><strong>{selectedPerson.personality}</strong></li>
-+                <li><span>Known abilities</span><strong>{selectedPerson.knownAbilities?.length ?? 0}</strong></li>
-               </ul>
-+              {selectedPerson.knownAbilities && selectedPerson.knownAbilities.length > 0 && (
-+                <div style={{ marginTop: 10 }}>
-+                  <h4>Abilities</h4>
-+                  <ul>
-+                    {selectedPerson.knownAbilities.map((abId) => {
-+                      const ab = world.hybridAbilities.find((h) => h.id === abId);
-+                      return (
-+                        <li key={abId} title={ab?.description}>{ab?.name ?? abId}</li>
-+                      );
-+                    })}
-+                  </ul>
+@@
+           <div className="timeline-mini">
+             <h3>Simulation log</h3>
+             {world.events.length === 0 ? (
+               <p className="muted">No events yet. Start the simulation.</p>
+             ) : (
+               world.events.slice().reverse().slice(0, 12).map((e, i) => (
+                 <div key={i} className="log-item">
+                   <span style={{ flex: 1 }}>{e}</span>
+                 </div>
+               ))
+             )}
+           </div>
+         </aside>
+       </main>
+ 
++      <section className="panel" style={{ marginTop: 18 }}>
++        <h2>Chronicle</h2>
++        <div style={{ display: 'flex', gap: 12 }}>
++          <div style={{ flex: 1 }}>
++            <h3>Timeline</h3>
++            {world.chronicle.slice().reverse().slice(0, 40).map((h) => (
++              <div key={h.id} style={{ padding: 8, borderBottom: '1px solid rgba(148,163,184,0.08)' }}>
++                <strong>{h.tick}: {h.title}</strong>
++                <div style={{ fontSize: 12 }}>{h.description}</div>
++              </div>
++            ))}
++          </div>
++          <div style={{ width: 320 }}>
++            <h3>Notable figures</h3>
++            {world.figures.length === 0 ? (
++              <div className="mod-card">No notable figures yet.</div>
++            ) : (
++              world.figures.map((f) => (
++                <div key={f.id} className="mod-card">
++                  <strong>{f.id}</strong>
++                  <small>Score: {f.score}</small>
 +                </div>
-+              )}
-             </div>
-           ) : (
-             <p>No inhabitants selected.</p>
-           )}
-@@
--          <section>
--            <h2>Mods</h2>
-+          <section>
-+            <h2>Hybrid abilities</h2>
-+            <div className="mod-list">
-+              {world.hybridAbilities.length === 0 ? (
-+                <div className="mod-card">No hybrid abilities catalogued yet.</div>
-+              ) : (
-+                world.hybridAbilities.map((h) => (
-+                  <div key={h.id} className="mod-card">
-+                    <strong>{h.name}</strong>
-+                    <small>{h.energyTypes.join(' + ')}</small>
-+                    <span>{h.description}</span>
-+                  </div>
-+                ))
-+              )}
-+            </div>
-+          </section>
++              ))
++            )}
++          </div>
++        </div>
++      </section>
 +
-+          <section>
-+            <h2>Mods</h2>
-             <div className="mod-list">
-               {modCatalog.map((mod) => {
-                 const active = getActiveModIds();
-                 const checked = active.includes(mod.id);
-@@
-                   </label>
-                 );
-               })}
-             </div>
-           </section>
+     </div>
+   );
+ }

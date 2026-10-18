@@ -1,7 +1,8 @@
-import type { WorldState, Person } from './types';
+import type { WorldState } from './types';
 import { updateCivilizations } from './civilization';
 import { simulateSkirmish } from './combat';
 import { attemptDiscoverHybrid } from './fusion';
+import { recordEvent, detectEmergentFigures } from './chronicle';
 
 export class SimulationEngine {
   private world: WorldState;
@@ -24,7 +25,7 @@ export class SimulationEngine {
     // Combat resolution for wars
     simulateSkirmish(this.world as WorldState);
 
-    for (const person of this.world.people as Person[]) {
+    for (const person of this.world.people as any[]) {
       this.updatePerson(person);
 
       // attempt hybrid discovery occasionally
@@ -32,13 +33,18 @@ export class SimulationEngine {
         attemptDiscoverHybrid(this.world as WorldState, person);
       }
     }
+
+    // Recompute notable figures every 25 ticks
+    if (this.world.tick % 25 === 0) {
+      detectEmergentFigures(this.world as WorldState, 2);
+    }
   }
 
   getWorld() {
     return this.world;
   }
 
-  private updatePerson(person: Person) {
+  private updatePerson(person: any) {
     person.hunger = Math.min(100, person.hunger + 3);
     person.energy = Math.max(0, person.energy - 1);
 
@@ -60,6 +66,7 @@ export class SimulationEngine {
       const x = (person.x + 1) % this.world.width;
       const y = (person.y + 2) % this.world.height;
       this.world.buildings.push({ id: `hut-${Date.now()}-${Math.random()}`, x, y, type: 'hut' });
+      recordEvent(this.world as WorldState, 'Construction', `${person.name} built a ${'hut'}`, [person.id, person.homeId ?? ''], ['construction']);
     } else {
       person.goal = 'Explore the frontier';
       person.x = (person.x + 1) % this.world.width;

@@ -73,6 +73,21 @@ export interface EnergySystem {
   compatibility: string[];
 }
 
+export interface HistoricalEvent {
+  id: string;
+  tick: number;
+  title: string;
+  description: string;
+  subjects: string[]; // personIds or civIds
+  tags: string[];
+}
+
+export interface ChronicleFigure {
+  id: string; // personId
+  score: number;
+  highlights: string[]; // event ids
+}
+
 export interface WorldState {
   width: number;
   height: number;
@@ -85,4 +100,6 @@ export interface WorldState {
   civilizations: Civilization[];
   events: string[];
   hybridAbilities: Ability[];
+  chronicle: HistoricalEvent[];
+  figures: ChronicleFigure[];
 }
