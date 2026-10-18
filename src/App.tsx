@@ -1,61 +1,24 @@
---- a/src/App.tsx
-+++ b/src/App.tsx
-@@
-   useEffect(() => {
-     const activeMods = loadModDefinitions();
-     setModCatalog(activeMods);
-   }, []);
-@@
--  return (
-+  return (
-     <div className="app-shell">
-@@
-         <aside className="panel sidebar">
-           <section>
-             <h2>World status</h2>
-@@
-           </section>
- 
--          <section>
--            <h2>Active mods</h2>
--            <div className="mod-list">
--              {modCatalog.map((mod) => (
--                <div key={mod.id} className="mod-card">
--                  <strong>{mod.name}</strong>
--                  <small>{mod.energyType}</small>
--                  <span>{mod.description}</span>
--                </div>
--              ))}
--            </div>
--          </section>
-+          <section>
-+            <h2>Civilizations</h2>
-+            <div className="mod-list">
-+              {world.civilizations.map((civ) => (
-+                <div key={civ.id} className="mod-card">
-+                  <strong>{civ.name}</strong>
-+                  <small>Pop: {civ.populationIds.length}</small>
-+                  <span>Food: {civ.resources.food} · Wood: {civ.resources.wood} · Stone: {civ.resources.stone}</span>
-+                </div>
-+              ))}
-+            </div>
-+          </section>
-+
-+          <section>
-+            <h2>Active mods</h2>
-+            <div className="mod-list">
-+              {modCatalog.map((mod) => (
-+                <div key={mod.id} className="mod-card">
-+                  <strong>{mod.name}</strong>
-+                  <small>{mod.energyType}</small>
-+                  <span>{mod.description}</span>
-+                </div>
-+              ))}
-+            </div>
-+          </section>
-         </aside>
-@@
-       </section>
 @@
          <aside className="panel inspector">
            <h2>Person inspector</h2>
+           {selectedPerson ? (
+@@
+           <div className="timeline-mini">
+             <h3>Simulation log</h3>
+-            {world.people.slice(0, 4).map((person) => (
+-              <div key={person.id} className="log-item">
+-                <button type="button" onClick={() => setSelectedPersonId(person.id)}>{person.name}</button>
+-                <span>{person.goal}</span>
+-              </div>
+-            ))}
++            {world.events.length === 0 ? (
++              <p className="muted">No events yet. Start the simulation.</p>
++            ) : (
++              world.events.slice().reverse().slice(0, 12).map((e, i) => (
++                <div key={i} className="log-item">
++                  <span style={{ flex: 1 }}>{e}</span>
++                </div>
++              ))
++            )}
+           </div>
+         </aside>

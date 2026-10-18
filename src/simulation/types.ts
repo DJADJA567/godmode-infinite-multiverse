@@ -22,6 +22,14 @@ export interface Person {
   goal: string;
   personality: string;
   homeId: string | null; // village/civilization id
+
+  // combat & progression stats
+  strength: number;
+  defense: number;
+  agility: number;
+  xp: number;
+  level: number;
+  skills: Record<string, number>;
 }
 
 export interface Building {
@@ -61,4 +69,5 @@ export interface WorldState {
   buildings: Building[];
   systems: EnergySystem[];
   civilizations: Civilization[];
+  events: string[];
 }

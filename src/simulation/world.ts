@@ -73,6 +73,12 @@ export function generateWorld(seed: number, width: number, height: number): Worl
       goal: 'Explore the wilds',
       personality,
       homeId: null,
+      strength: 5 + Math.floor(rand() * 6),
+      defense: 3 + Math.floor(rand() * 5),
+      agility: 3 + Math.floor(rand() * 5),
+      xp: 0,
+      level: 1,
+      skills: {},
     });
   }
 
@@ -156,6 +162,7 @@ export function generateWorld(seed: number, width: number, height: number): Worl
       },
     ],
     civilizations,
+    events: [],
   };
 }
 

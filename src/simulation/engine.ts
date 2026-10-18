@@ -1,5 +1,6 @@
-import type { Person, WorldState } from './types';
+import type { WorldState, Person } from './types';
 import { updateCivilizations } from './civilization';
+import { simulateSkirmish } from './combat';
 
 export class SimulationEngine {
   private world: WorldState;
@@ -13,6 +14,9 @@ export class SimulationEngine {
 
     // Update civilizations before individuals (they may produce resources, spawn people, trigger wars)
     updateCivilizations(this.world as WorldState);
+
+    // Combat resolution for wars
+    simulateSkirmish(this.world as WorldState);
 
     for (const person of this.world.people as Person[]) {
       this.updatePerson(person);
