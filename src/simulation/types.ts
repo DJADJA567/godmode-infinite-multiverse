@@ -10,6 +10,17 @@ export interface WorldTile {
   fertility: number;
 }
 
+export interface Ability {
+  id: string;
+  name: string;
+  description: string;
+  energyTypes: string[]; // e.g. ['ki','chakra']
+  power: number;
+  cost: number;
+  sourceSystems: string[]; // systems that generated it
+  conditions?: string[];
+}
+
 export interface Person {
   id: string;
   name: string;
@@ -30,6 +41,9 @@ export interface Person {
   xp: number;
   level: number;
   skills: Record<string, number>;
+
+  // discovered abilities
+  knownAbilities: string[];
 }
 
 export interface Building {
@@ -70,4 +84,5 @@ export interface WorldState {
   systems: EnergySystem[];
   civilizations: Civilization[];
   events: string[];
+  hybridAbilities: Ability[];
 }

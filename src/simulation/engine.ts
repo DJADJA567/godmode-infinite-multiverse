@@ -1,7 +1,7 @@
-import type { WorldState, ModDefinition } from './types';
+import type { WorldState, Person } from './types';
 import { updateCivilizations } from './civilization';
 import { simulateSkirmish } from './combat';
-import { applyModsToWorld } from './mods';
+import { attemptDiscoverHybrid } from './fusion';
 
 export class SimulationEngine {
   private world: WorldState;
@@ -11,9 +11,8 @@ export class SimulationEngine {
     this.world = structuredClone(initialWorld);
   }
 
-  applyModDefinitions(activeModIds: string[], availableMods: ModDefinition[]) {
+  applyModDefinitions(activeModIds: string[], availableMods: any[]) {
     this.activeModIds = activeModIds;
-    applyModsToWorld(this.world as any, activeModIds, availableMods as any);
   }
 
   step() {
@@ -25,8 +24,13 @@ export class SimulationEngine {
     // Combat resolution for wars
     simulateSkirmish(this.world as WorldState);
 
-    for (const person of this.world.people as any[]) {
+    for (const person of this.world.people as Person[]) {
       this.updatePerson(person);
+
+      // attempt hybrid discovery occasionally
+      if (person.job === 'explorer' || person.personality === 'curious' || person.xp > 30) {
+        attemptDiscoverHybrid(this.world as WorldState, person);
+      }
     }
   }
 
@@ -34,7 +38,7 @@ export class SimulationEngine {
     return this.world;
   }
 
-  private updatePerson(person: any) {
+  private updatePerson(person: Person) {
     person.hunger = Math.min(100, person.hunger + 3);
     person.energy = Math.max(0, person.energy - 1);
 
