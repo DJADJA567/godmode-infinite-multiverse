@@ -1,23 +1,7 @@
-export interface ModDefinition {
-  id: string;
-  name: string;
-  description: string;
-  energyType: string;
-  compatibility: string[];
-  dependencies?: string[];
-  provides?: {
-    systems?: {
-      id: string;
-      name: string;
-      description: string;
-      energyType: string;
-      compatibility: string[];
-    }[];
-  };
-}
+// Mod management: built-in loader + support for custom mods saved in localStorage
+import type { ModDefinition } from './types';
 
-import type { EnergySystem } from './types';
-
+// built-in definitions
 const builtInMods: ModDefinition[] = [
   {
     id: 'ki-system',
@@ -57,39 +41,72 @@ const builtInMods: ModDefinition[] = [
   },
 ];
 
+const CUSTOM_MOD_KEY = 'godmode:customMods';
+
 export function getBuiltInMods() {
   return builtInMods;
 }
 
-// Load mods declared in public/mods via manifest.json
+export function listCustomMods(): ModDefinition[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_MOD_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as ModDefinition[];
+  } catch (err) {
+    return [];
+  }
+}
+
+export function saveCustomMod(mod: ModDefinition) {
+  const current = listCustomMods();
+  const index = current.findIndex((m) => m.id === mod.id);
+  if (index >= 0) current[index] = mod; else current.push(mod);
+  localStorage.setItem(CUSTOM_MOD_KEY, JSON.stringify(current));
+  // notify listeners
+  try {
+    window.dispatchEvent(new CustomEvent('godmode:modsChanged'));
+  } catch (e) {
+    // ignore
+  }
+}
+
+export function deleteCustomMod(modId: string) {
+  const current = listCustomMods().filter((m) => m.id !== modId);
+  localStorage.setItem(CUSTOM_MOD_KEY, JSON.stringify(current));
+  try {
+    window.dispatchEvent(new CustomEvent('godmode:modsChanged'));
+  } catch (e) {
+    // ignore
+  }
+}
+
 export async function loadAvailableMods(): Promise<ModDefinition[]> {
+  const fetched: ModDefinition[] = [];
   try {
     const resp = await fetch('/mods/manifest.json');
-    if (!resp.ok) return builtInMods;
-    const list: string[] = await resp.json();
-    const fetched: ModDefinition[] = [];
-    for (const filename of list) {
-      try {
-        const r = await fetch(`/mods/${filename}`);
-        if (!r.ok) continue;
-        const j = await r.json();
-        fetched.push(j as ModDefinition);
-      } catch (err) {
-        // ignore single file errors
-        // eslint-disable-next-line no-console
-        console.warn('failed loading mod', filename, err);
+    if (resp.ok) {
+      const list: string[] = await resp.json();
+      for (const filename of list) {
+        try {
+          const r = await fetch(`/mods/${filename}`);
+          if (!r.ok) continue;
+          const j = await r.json();
+          fetched.push(j as ModDefinition);
+        } catch (err) {
+          // ignore
+        }
       }
     }
-
-    // merge built-ins with fetched (override built-ins with fetched if same id)
-    const map = new Map<string, ModDefinition>();
-    for (const m of builtInMods) map.set(m.id, m);
-    for (const m of fetched) map.set(m.id, m);
-    return Array.from(map.values());
   } catch (err) {
-    // fallback
-    return builtInMods;
+    // ignore network errors
   }
+
+  // merge built-ins, fetched, and local custom mods
+  const map = new Map<string, ModDefinition>();
+  for (const m of builtInMods) map.set(m.id, m);
+  for (const m of fetched) map.set(m.id, m);
+  for (const m of listCustomMods()) map.set(m.id, m);
+  return Array.from(map.values());
 }
 
 export function validateMods(mods: ModDefinition[]) {
@@ -117,7 +134,7 @@ export function detectConflicts(mods: ModDefinition[]) {
   // naive conflict detection: two mods providing the same system id
   const provided = new Map<string, string[]>();
   for (const mod of mods) {
-    const systems = mod.provides?.systems ?? [];
+    const systems = (mod as any).provides?.systems ?? [];
     for (const s of systems) {
       const arr = provided.get(s.id) ?? [];
       arr.push(mod.id);
@@ -152,7 +169,7 @@ export function resolveDependencies(mods: ModDefinition[]) {
       return;
     }
     temp.add(id);
-    for (const dep of mod.dependencies ?? []) visit(dep);
+    for (const dep of (mod.dependencies ?? []) as string[]) visit(dep);
     temp.delete(id);
     visited.add(id);
     result.push(mod);
@@ -167,9 +184,9 @@ export function applyModsToWorld(world: any, activeModIds: string[], availableMo
   for (const id of activeModIds) {
     const mod = byId.get(id);
     if (!mod) continue;
-    const systems = mod.provides?.systems ?? [];
+    const systems = (mod as any).provides?.systems ?? [];
     for (const s of systems) {
-      const exists = (world.systems as EnergySystem[]).find((ws: EnergySystem) => ws.id === s.id);
+      const exists = (world.systems as any[]).find((ws: any) => ws.id === s.id);
       if (!exists) {
         world.systems.push({ id: s.id, name: s.name, description: s.description, energyType: s.energyType, compatibility: s.compatibility });
       }
